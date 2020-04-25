@@ -66,6 +66,15 @@ class PropublicaCleaner(object):
 
     REPORT_EVERY = 10000
     
+    # Variables needed outside of instance
+    # to save work when user hits cnt-C:
+
+    TMP_FILE_FD      = None
+    TXT_OUTFILE_PATH = None
+    ENTITIES_OUT_FD  = None
+    METADATA_OUT_FD  = None
+    
+
     #------------------------------------
     # Constructor
     #-------------------
@@ -94,12 +103,19 @@ class PropublicaCleaner(object):
             # using SED, which is much faster than doing it
             # in Python:
             text_out_fd = tempfile.NamedTemporaryFile('w', delete=False)
-            
+
             entities_out_fd = open(entities_outfile, 'w')
             metadata_out_fd = open(metadata_outfile, 'w')
+
+            # For cleanup after a possible cnt-C
+            PropublicaCleaner.TMP_FILE_FD      = text_out_fd
+            PropublicaCleaner.ENTITIES_OUT_FD  = entities_out_fd
+            PropublicaCleaner.METADATA_OUT_FD  = metadata_out_fd
+            PropublicaCleaner.TXT_OUTFILE_PATH = text_outfile
             
             with open(csv_in_file, newline='') as csv_in_fd:
                 
+                print("Start splitting to out files...")
                 # Do the work:
                 self.output_clean_csv(csv_in_fd, 
                                       metadata_out_fd, 
@@ -112,17 +128,7 @@ class PropublicaCleaner(object):
             tmp_file_name = text_out_fd.name
             text_out_fd.close()
 
-            shell_cmd = f"sed -e 's/<[^>]*>//g' {tmp_file_name} > {text_outfile}"
-            try:
-                subprocess.run(shell_cmd, check=True, shell=True)
-            except CalledProcessError as e:
-                print(f"Could not remove paragraph tags from messages file: {repr(e)}")
-                # Just move the message tmp file to its final
-                # destination:
-                shutil.move(tmp_file_name, text_outfile)
-            else:
-                # The HTML tag cleanup worked.
-                os.remove(tmp_file_name)
+            self.clean_textfile(tmp_file_name, text_outfile)
             
         finally:
             entities_out_fd.close()
@@ -196,13 +202,59 @@ class PropublicaCleaner(object):
             del(row_dict['message'])
             del(row_dict['entities'])
             metadata_out_writer.writerow(row_dict)
-            
+
             # Another row processed:
             rows_processed += 1
             if rows_processed >= self.REPORT_EVERY:
                 total_rows_processed += rows_processed
                 print(f"Processed {total_rows_processed} rows")
                 rows_processed = 0
+
+    #------------------------------------
+    # clean_textfile
+    #-------------------
+    
+    @classmethod
+    def clean_textfile(cls, tmp_file_name, text_outfile):
+        '''
+        Takes path to a file with the ad messages.
+        Removes any lingering HTML tags, and writes
+        the result to text_outfile. Then removes the
+        source file.
+        
+        If error, prints message, and moves the source
+        file to text_outfile.
+        
+        Must be a class method, because the cnt-C handler
+        must be able to call it.
+        
+        @param tmp_file_name: path to file with contaminated message texts
+        @type tmp_file_name: str
+        @param text_outfile: destination path for the cleaned output,
+            or the contaminated file, if cleaning fails
+        @type text_outfile: str
+        '''
+        
+        #**********
+        print(f"SEDing from {tmp_file_name} to {text_outfile}...")
+        #**********
+        shell_cmd = f"sed -e 's/<[^>]*>//g' {tmp_file_name} > {text_outfile}"
+        try:
+            subprocess.run(shell_cmd, check=True, shell=True)
+        except CalledProcessError as e:
+            print(f"Could not remove paragraph tags from messages file: {repr(e)}")
+            # Just move the message tmp file to its final
+            # destination:
+            #************
+            print(f"Moving {tmp_file_name} to {text_outfile}")
+            #************
+            shutil.move(tmp_file_name, text_outfile)
+        else:
+            #************
+            print(f"Removing {tmp_file_name}")
+            #************
+            # The HTML tag cleanup worked.
+            os.remove(tmp_file_name)
 
     #------------------------------------
     # adjust_csv_field_size_limit
@@ -230,7 +282,21 @@ class PropublicaCleaner(object):
 # ------------------------------ Cnt-C Signal Handler -------------
 
 def signal_handler(signal, frame):
-        print('Exiting in response to Ctrl+C.')
+        print('Abort in response to Ctrl+C...')
+        print('Saving partially done work ...')
+        
+        tmp_file_name = PropublicaCleaner.TMP_FILE_FD.name
+        PropublicaCleaner.TMP_FILE_FD.close()
+        PropublicaCleaner.ENTITIES_OUT_FD.close()
+        PropublicaCleaner.METADATA_OUT_FD.close()
+        
+        # Put whatever message texts have been done
+        # through the SED cleaner, and to the final
+        # out file:
+        PropublicaCleaner.clean_textfile(tmp_file_name, PropublicaCleaner.TXT_OUTFILE_PATH)
+        
+        print('Done saving partial work')
+        
         sys.exit(0)
 signal.signal(signal.SIGINT, signal_handler)
 
