@@ -1,28 +1,33 @@
 <h1>Splitting Propublica Facebook Ad Exports</h1>
 Inputs a .csv file of Facebook ads as exported from Propublica. Splits the content into three .csv files:
 
-* The message texts without HTML tags.
+* The message texts without HTML tags
 * The entities
 * The metadata
 
 The Propublica row id is a common key for the three files.
 
 <h4>Example for message texts output file:</h4>
-```
+
+<pre>
 id,message
 hyperfeed_story_id_5c9baa3ee0ec08073500042,"BREAKING: Trump’s Department of the Interior plans to ...
-hyperfeed_story_id_5c9bb2a2413852086735771,"The Mueller investigation is over...  
+hyperfeed_story_id_5c9bb2a2413852086735771,"The Mueller investigation is over...
         ...
-```
+</pre>
+
 <h4>Example for entities output file:</h4>
-```
+
+<pre>
 id,entity,entity_type
 hyperfeed_story_id_5c9baa3ee0ec08073500042,Endangered Species Act,Organization
 hyperfeed_story_id_5c9baa3ee0ec08073500042,Trump’s Department of the Interior,Organization
 ...
-```
+</pre>
+
 <h4>Metadata output file</h4>
 The metadata file contains the following fields:
+
 * id
 * political
 * not_political
