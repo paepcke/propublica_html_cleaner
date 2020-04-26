@@ -86,7 +86,7 @@ Example invocations:
           clean_propublica_export.py the_propub_export.csv -n 5000
 </pre>
 
-</pre>
+<pre>
          clean_propublica_export.py the_propub_export.csv \
                                 -t /tmp/propub_msgs.csv 
                                 -m /tmp/propub_metadata.csv 
