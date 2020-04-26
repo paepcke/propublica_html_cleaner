@@ -15,6 +15,8 @@ Simplest invocation:
 
 `src/cleaner/clean_propublica_export.py /tmp/fbpac-ads-en-US.csv`
 
+where /tmp/fbpac-ads-en-US.csv is the exported Facebook ads file from Propublica.
+
 Use the `-h/--help` switches for more options. The options include the ability to separately specify the destination of each output file, and to limit the number of processed rows.
 
 <h4>Example for message texts output file:</h4>
