@@ -19,7 +19,6 @@ CREATE TABLE Metadata (id varchar(100),
               political_probability double,
               targeting varchar(1000) DEFAULT '',
               suppressed varchar(2),
-              targets varchar(100),
               advertiser varchar(255),
               page varchar(255), 
               lower_page varchar(1000),
@@ -64,4 +63,9 @@ LOAD DATA LOCAL INFILE '/tmp/propub_targets.csv'
 INTO TABLE Targets
 FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\n'
 IGNORE 1 LINES;
+
+CREATE INDEX idx_id ON Entities(id);
+CREATE INDEX idx_id ON Messages(id);
+CREATE INDEX idx_id ON Metadata(id);
+CREATE INDEX idx_id ON Targets(id);
 
