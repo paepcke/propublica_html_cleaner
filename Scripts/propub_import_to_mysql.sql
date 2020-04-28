@@ -5,27 +5,30 @@ CREATE TABLE Entities (id varchar(100),
                        entity_type varchar(255)
                        ) engine=MyISAM;
 
+-- NOTE: We'll created_at and updated_at to DATETIME
+--       later. But we take it in from CSV as a string
+--       initially:
 DROP TABLE IF EXISTS Metadata;
 CREATE TABLE Metadata (id varchar(100),
-              political tinyint,
-              not_political tinyint,
+              political int,
+              not_political int,
               title varchar(255),
-              thumbnail varchar(500),
-              created_at DATETIME,
-              updated_at DATETIME,
+              thumbnail mediumtext,
+              created_at varchar(100),  
+              updated_at varchar(100),
               lang varchar(20),
-              images varchar(1000),
+              images mediumtext,
               impressions int,
               political_probability double,
-              targeting varchar(1000) DEFAULT '',
+              targeting text,
               suppressed varchar(2),
               advertiser varchar(255),
               page varchar(255), 
               lower_page varchar(1000),
-              targetings varchar(255),
+              targetings mediumtext,
               paid_for_by varchar(255),
-              targetedness int,
-              listbuilding_fundraising_proba double
+              targetedness varchar(255),
+              listbuilding_fundraising_proba varchar(20)
               ) engine=MyISAM;
 
 DROP TABLE IF EXISTS Messages;
@@ -40,7 +43,7 @@ CREATE TABLE Targets (id varchar(100),
 
 LOAD DATA LOCAL INFILE '/tmp/propub_entities.csv'
 INTO TABLE Entities
-FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\n';
+FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\r\n';
 
 
 # Load the message texts:
@@ -54,14 +57,14 @@ IGNORE 1 LINES;
 
 LOAD DATA LOCAL INFILE '/tmp/propub_metadata.csv'
 INTO TABLE Metadata
-FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\n'
+FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\r\n'
 IGNORE 1 LINES;
 
 # Load the targets
 
 LOAD DATA LOCAL INFILE '/tmp/propub_targets.csv'
 INTO TABLE Targets
-FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\n'
+FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\r\n'
 IGNORE 1 LINES;
 
 CREATE INDEX idx_id ON Entities(id);
